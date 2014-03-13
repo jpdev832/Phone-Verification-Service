@@ -13,7 +13,7 @@ if($messageData == null){
 	die(json_encode($output));
 }
 
-$verify = new VerificationService($messageData[TO_UID], $messageData[DATA][NETWORK]);
+$verify = new VerificationService($messageData[TO_UID], $messageData[DATA][NETWORK], TRUE);
 $result = $verify->generateVerificationKey();
 $result["message"] = "verification status";
 if($result["status_code"] == 200){

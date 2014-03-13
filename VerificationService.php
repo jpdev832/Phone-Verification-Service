@@ -1,4 +1,5 @@
 <?php
+include_once './CarrierHelper.php';
 include_once './config_verify.php';
 include_once './VerificationManager.php';
 
@@ -12,25 +13,24 @@ class VerificationService {
 	private $numTail;
 	private $network;
 	private $verifyKey;
-	private $networkAdresses;
-	private $networkValues;
 	
 	private $verificationManager;
+	
+	private $carrier;
 	
 	/**
 	 * Setup proper settings to send notification
 	 */
-	public function __construct($number, $network) {
+	public function __construct($number, $network, $debug = FALSE) {
 		$this->number = $number;
 		$this->areaCode = intval(substr($number, 0, 3));
 		$this->numHead = intval(substr($number, 3, 3));
 		$this->numTail = intval(substr($number, 6, 4));
 		$this->network = $network;
 		
-		$this->networkAdresses = array( "T-Mobile" => "tmomail.net" );
-		$this->networkValues = array( "T-Mobile" => 1 );
+		$this->carrier = new CarrierHelper();
 		
-		$this->verificationManager = new VerificationManager();
+		$this->verificationManager = new VerificationManager($debug);
 	}
 	
 	public static function getVID($number){
@@ -43,10 +43,10 @@ class VerificationService {
 	public function generateVerificationKey(){
 		$t = intval(((time() % 13589) + rand(0, 99999)) / 2);
 		$sec1 = ($this->areaCode + $this->numHead + $this->numTail) % 482;
-		$sec2 = intval(($this->networkValues[$this->network] + rand(0, 99)) / 2);
+		$sec2 = intval(($this->carrier->getNetworkId($this->network) + rand(0, 99)) / 2);
 		$sec3 = $t % 61335;
 		
-		$code = sprintf("%03s", $sec1).sprintf("%02s", $sec2).sprintf("%05s", $sec3);
+		$code = sprintf("%03s%02s%05s", $sec1, $sec2, $sec3);
 		
 		$this->verifyKey = $code;
 		
@@ -59,10 +59,10 @@ class VerificationService {
 	 */
 	public function send()
 	{
-		$address = $this->networkAdresses[$this->network];
+		$address = $this->carrier->getNetworkDomain($this->network);
 		$email = $this->number."@".$address;
 		
-		mail($email, "", "verification code:\n".$this->verifyKey, "From: <inser email address here>\r\n", "-f<inser email address here>");
+		mail($email, "", "verification code:\n".$this->verifyKey, "From: verify@staticvillage.com\r\n", "-fverify@staticvillage.com");
 	}
 }
 

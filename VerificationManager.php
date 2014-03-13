@@ -7,9 +7,16 @@ include_once './DatabaseManager.php';
  */
 class VerificationManager {
 	private $db;
+	private $dbTable;
 	
-	function __construct() {
-		$this->db = new DatabaseManager(DB_HOST, DB_DATABASE, DB_USER, DB_PASS);
+	function __construct($debug = FALSE) {
+		if($debug == TRUE){
+			$this->dbTable = VERIFY_DB_TABLE."_QA";
+		}else{
+			$this->dbTable = VERIFY_DB_TABLE;
+		}
+		
+		$this->db = new DatabaseManager(VERIFY_DB_HOST, VERIFY_DB_DATABASE, VERIFY_DB_USER, VERIFY_DB_PASS);
 	}
 	
 	/*
@@ -19,7 +26,7 @@ class VerificationManager {
 	 */
 	public function checkVerification($vid, $vCode)
 	{
-		$result = $this->db->selectquery("*", DB_TABLE, KEY_VID."='".$vid."' AND ".KEY_V_CODE."='".$vCode."'");
+		$result = $this->db->selectquery("*", $this->dbTable, KEY_VID."='".$vid."' AND ".KEY_V_CODE."='".$vCode."'");
 		
 		if($result == null){
 			return FALSE;
@@ -37,7 +44,7 @@ class VerificationManager {
 	{
 		$values = "'".$vid."','".$vCode."',NULL,NULL,NULL";
 		
-		if($this->db->insertquery(DB_TABLE, $values)){
+		if($this->db->insertquery($this->dbTable, $values)){
 			$output = array(
 				"status" => "SUCCESS",
 				"status_code" => 200,
@@ -57,10 +64,10 @@ class VerificationManager {
 	 * 
 	 * Returns: Status array
 	 */
-	public function removeUser($vid)
+	public function removeVerification($vid)
 	{
 		$where = KEY_VID."='".$vid."'";
-		if($this->db->deletequery(DB_TABLE, $where)){
+		if($this->db->deletequery($this->dbTable, $where)){
 			$output = array(
 				"status" => "SUCCESS",
 				"status_code" => 200,
